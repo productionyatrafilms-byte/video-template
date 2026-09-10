@@ -1,428 +1,475 @@
-/* index.html — page styles (Frames 1-3: splash + topics onboarding, animated) */
+/* index.html — "Meghkumar" video slate
+   Built from Figma nodes 1:1057 (idle), 1:1080 (ready/poster), 1:1103 (video ready),
+   1:1126 (video playing) on the Story-Video-slates file. See index.md for the per-frame
+   breakdown and the state-machine rationale.
+
+   Title font: Spirax for the `.english` span (Figma's own spec), ITFDevanagari for `.hindi`
+   and NotoSansGujarati for `.gujrati` — the latter two already come from style.css's shared
+   @font-face rules, only Spirax is new/page-specific here. */
+
+@font-face {
+    font-family: "Spirax";
+    src: url("../../fonts/Spirax-Regular.ttf") format("truetype");
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
 
 :root {
-    --color-purple-text: #7a32a1;
-    --color-title-start: #4222AA;
-    --color-title-end: #B12D99;
-    --color-peach-1: #ffd0a9;
-    --color-peach-2: #ffa659;
-    --color-cream-border: #fff2e2;
-    --color-divider: #dfd0de;
-    --color-hover-1: #C0A9FF;
-    --color-hover-2: #8D59FF;
-
-    --font-baloo: 'Baloo', sans-serif;
-    --font-krungthep: 'Krungthep', 'Comic Sans MS', system-ui, sans-serif;
-    --font-news: 'News701 BT', Georgia, serif;
-
-    --move-duration: 1s;
-    --move-ease: cubic-bezier(0.65, 0, 0.35, 1);
+    --color-pill-from: #dc3d40;
+    --color-pill-to: #620002;
+    --color-panel-border: #ffffff;
 }
 
-@font-face {
-    font-family: 'Baloo';
-    src: url('../../fonts/Baloo Regular 400.ttf') format('truetype');
-    font-weight: 400;
-    font-style: normal;
+/* ===== page shell =====
+   `.main-container` stays locked to Figma's 1920:1080 canvas as one proportional unit — it now
+   holds only the video panel + title pill, which still need to scale together like a Figma
+   preview (project.md: no px/rem/em/pt/vh, proportional scaling only). The background/poster
+   layer below is deliberately NOT part of this locked box (see `.bg-layer`). */
+html {
+    overflow: hidden;
 }
 
-@font-face {
-    font-family: 'News701 BT';
-    src: url('../../fonts/NEWS701B.ttf') format('truetype');
-    font-weight: 700;
-    font-style: normal;
-}
-
-@font-face {
-    font-family: 'Krungthep';
-    src: url('../../fonts/krungthep.ttf') format('truetype');
-    font-weight: 400;
-    font-style: normal;
-}
-
-@font-face {
-    font-family: 'ITFDevanagari';
-    src: url('../../fonts/ITFDevanagari-Bold-02.otf') format('opentype');
-    font-weight: 700;
-    font-style: normal;
-}
-
-@font-face {
-    font-family: 'NotoSansGujaratiBold';
-    src: url('../../fonts/NotoSansGujarati-Bold.ttf') format('truetype');
-    font-weight: 700;
-    font-style: normal;
-}
-
-@font-face {
-    font-family: 'NotoSansGujarati';
-    src: url('../../fonts/NotoSansGujarati-Regular.ttf') format('truetype');
-    font-weight: 400;
-    font-style: normal;
-}
-
-body {
-    background: #f4e2ea;
-}
-
-/* portrait: center the design box instead of leaving it pinned top-left */
-@media (orientation: portrait) {
-    body {
-        min-height: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-}
-
-.hindi, .gujrati {
-    display: none;
-}
-
-.gujrati {
-    font-family: 'NotoSansGujarati', sans-serif;
-}
-
-.hindi {
-    font-family: 'ITFDevanagari', sans-serif;
+body.index-page {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background: #000;
 }
 
 .main-container {
     position: relative;
-    width: 100%;
-    aspect-ratio: 16 / 9;
+    z-index: 1;
+    width: min(100%, 177.78vh);
+    aspect-ratio: 1920 / 1080;
+    margin: 0 auto;
+    overflow: hidden;
+    /* transparent + empty outside its own children's boxes — without this it would sit on top
+       of (and silently block hover/click on) the poster/panel/arc in `.bg-layer` underneath.
+       `.video-panel.is-interactive` (below) re-enables pointer-events for itself and its
+       descendants once the video panel actually needs to be clickable. */
+    pointer-events: none;
+}
+
+/* ===== [bg-img] shared background + poster — never touch =====
+   Sits OUTSIDE `.main-container`, `position:fixed` across the whole viewport (not locked to the
+   16:9 frame) — same technique this project already uses elsewhere for full-bleed background
+   layers: it crops to fill wider/narrower screens rather than letterboxing, which is an accepted
+   trade-off for a background layer. `.main-container` (z-index 1) still paints on top of it. */
+.bg-layer {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
     overflow: hidden;
 }
 
 .bg-img {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+}
+
+.bg-room {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* ===== poster (panel.png + arc.png) =====
+   Both fully cover bg-home.png at rest. GSAP (index.js) drives every transform on this group:
+   the hover reveal of the title/play button, and the panel-up / arc-down exit on play click.
+   Base position here is the resting (on-screen) placement only — no transform authored in CSS,
+   so GSAP owns the transform property outright (mixing GSAP tweens with a CSS `transform`
+   declared in the stylesheet causes GSAP to silently discard the CSS one on its first tween). */
+.poster {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+}
+
+.poster__panel {
+    position: absolute;
+    left: 0%;
+    top: -2%;
+    width: 100%;
+    height: 100vh;
+    z-index: 1;
+    object-fit: cover;
+    display: block;
+}
+
+.poster__arc {
+    position: absolute;
+    left: -0.625%;
+    top: 75.26%;
+    width: 100.63%;
+    height: 28.98%;
+    z-index: 2;
+}
+
+.poster__arc-bg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    pointer-events: none;
+}
+
+/* title — rides along with the arc (nested inside it), positioned relative to the arc's own
+   box; GSAP sets its resting (hidden, shifted down) and revealed (hover) transforms. */
+.poster__title {
+    position: absolute;
+    left: 50%;
+    top: 54.8%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1vw;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.poster__title-flourish {
+    display: block;
+    width: 4.6vw;
+    height: auto;
+}
+
+.poster__title-flourish--right {
+    transform: scaleX(-1);
+}
+
+.poster__title-text {
+    margin: 0;
+    color: #fff;
+    text-align: center;
+    text-shadow: 0 0.208vw 0.208vw rgba(0, 0, 0, 0.25);
+    font-size: clamp(3.5vw, 7vw, 9vw);
+    letter-spacing: -0.3vw;
+    white-space: nowrap;
+}
+
+/* ===== [left-corner] home icon — never touch =====
+   Only shown once the video panel is open (video-ready/video-playing), not on the bare poster —
+   toggled via the `.is-visible` class (index.js, same pattern as #langSelect) rather than a CSS
+   sibling selector, since this element sits BEFORE `.main-container` in the DOM. */
+.btn-home {
+    position: absolute;
+    left: 2.71%;
+    top: 4.12%;
+    width: 3.125%;
+    z-index: 999999;
+    display: block;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.btn-home.is-visible {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.btn-home img {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+/* ===== title pill (top banner, frames 2-4) ===== */
+.title-pill {
+    position: absolute;
+    left: 27.04%;
+    top: 3.005%;
+    width: 46.4%;
+    height: 15.62%;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1vw;
+    background: linear-gradient(180deg, var(--color-pill-from), var(--color-pill-to));
+    opacity: 0.92;
+    border: 0.208vw solid #fff;
+    border-radius: 4.39vw;
+    box-shadow: 0 0.208vw 0.208vw rgba(0, 0, 0, 0.25);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.title-pill__flourish {
+    display: block;
+    width: 4.29vw;
+    height: auto;
+}
+
+.title-pill__flourish--right {
+    transform: scaleX(-1);
+}
+
+.title-pill__text {
+    margin: 0;
+    color: #fff;
+    text-align: center;
+    text-shadow: 0 0.208vw 0.208vw rgba(0, 0, 0, 0.25);
+    font-size: clamp(2.4vw, 4.6vw, 6vw);
+    letter-spacing: -0.2vw;
+    white-space: nowrap;
+}
+
+/* per-language title font — Spirax (English, per Figma) layers on top of style.css's shared
+   .hindi (ITFDevanagari) / .gujrati (NotoSansGujarati) rules, which already apply everywhere */
+.poster__title-text .english,
+.title-pill__text .english {
+    font-family: "Spirax", cursive;
+}
+
+/* ===== poster play button (over the background art, before the video panel opens) ===== */
+.btn-glow {
+    position: absolute;
+    z-index: 6;
+    width: 5.6vw;
+    height: 5.6vw;
+    border: 0;
+    padding: 0;
+    background: none;
+    cursor: pointer;
+    filter: drop-shadow(0 0.208vw 0.104vw rgba(0, 0, 0, 0.25));
+    transition: transform 0.2s ease;
+}
+
+.btn-glow:hover {
+    transform: scale(1.08);
+}
+
+.btn-glow img {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.btn-glow--poster {
+    left: 46.67%;
+    top: 71%;
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* ===== video panel (frames 3 & 4) =====
+   Position/size only — GSAP (index.js) owns its transform, starting off-screen above the
+   frame (clipped by .main-container's own overflow:hidden) and sliding down to rest here once
+   play is clicked. `.is-interactive` is toggled by index.js once the slide-in finishes, since a
+   transform-based offscreen position doesn't disable pointer-events on its own. */
+.video-panel {
+    position: absolute;
+    left: 16.04%;
+    top: 22.45%;
+    width: 66.72%;
+    height: 68.24%;
+    z-index: 4;
+    overflow: hidden;
+    border: 0.625vw solid var(--color-panel-border);
+    border-radius: 1.5625vw;
+    box-shadow: 0 0.52vw 1.04vw rgba(0, 0, 0, 0.35);
+    background: #000;
+    pointer-events: none;
+}
+
+.video-panel.is-interactive {
+    pointer-events: auto;
+}
+
+/* browser-native fullscreen (index.js requests it on this element) — override our own
+   percentage-based position/size so it actually fills the screen, since the UA's `:fullscreen`
+   sizing rules have lower specificity than our own class selector and would otherwise lose */
+.video-panel:fullscreen,
+.video-panel:-webkit-full-screen {
     position: fixed;
     inset: 0;
     width: 100%;
     height: 100%;
-    object-fit: cover;
-    z-index: -1;
+    border-radius: 0;
 }
 
-/* ---------- decorative flowers: always rotating, shrink + move left on Enter ---------- */
-
-.decor {
-    position: absolute;
-    aspect-ratio: 1 / 1;
-    pointer-events: none;
-    transform: translate(-50%, -50%);
-    transition: left var(--move-duration) var(--move-ease),
-                top var(--move-duration) var(--move-ease),
-                width var(--move-duration) var(--move-ease);
-}
-
-.decor__spin {
-    position: absolute;
-    inset: 0;
-    animation: decor-spin 10s linear infinite;
-}
-
-.decor img {
+.video-panel__media {
     display: block;
     width: 100%;
     height: 100%;
     object-fit: cover;
 }
 
-@keyframes decor-spin {
-    from {
-        transform: rotate(-72.64deg);
-    }
-    to {
-        transform: rotate(calc(-72.64deg + 360deg));
-    }
-}
-
-.fl1 {
-    left: 50%;
-    top: 51.95%;
-    width: 140vw;
-}
-
-.fl2 {
-    left: 119.6%;
-    top: 1.1%;
-    width: 50.17vw;
-    opacity: 0.35;
-}
-
-.main-container.settled .fl1 {
-    left: 17.77%;
-    top: 50%;
-    width: 76.8vw;
-}
-
-.main-container.settled .fl2 {
-    left: 99.3%;
-    top: 1.1%;
-    width: 50.17vw;
-}
-
-/* ---------- mascot: boy + divider move left, mat/shadow crossfade ---------- */
-
-.mascot {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-}
-
-.mascot__boy {
-    position: absolute;
-    display: block;
-    object-fit: cover;
-    z-index: 3;
-    left: 39.67%;
-    top: 7.87%;
-    width: 20.05%;
-    height: 54.75%;
-    transition: left var(--move-duration) var(--move-ease),
-                top var(--move-duration) var(--move-ease),
-                width var(--move-duration) var(--move-ease),
-                height var(--move-duration) var(--move-ease);
-}
-
-.main-container.settled .mascot__boy {
-    left: 6.72%;
-    top: 18.43%;
-    width: 22.92%;
-    height: 62.5%;
-}
-
-/* ---------- title: slides bottom -> top into the left-aligned "topics" spot ---------- */
-
-.title {
-    position: absolute;
-    width: 52%;
-    text-align: center;
-    font-family: var(--font-news);
-    font-weight: 700;
-    font-style: normal;
-    line-height: 1;
-    z-index: 4;
-    left: 24%;
-    top: 65.6%;
-    /* back button (settled -> splash): bottom first, then left */
-    transition: top 1.3s var(--move-ease),
-                left 1.3s var(--move-ease) 1.3s;
-}
-
-.main-container.settled .title {
-    left: 48%;
-    top: 14.5%;
-    /* enter button (splash -> settled): right first, then up */
-    transition: left 1.3s var(--move-ease),
-                top 1.3s var(--move-ease) 1.3s;
-}
-
-.title__line1,
-.title__line2 {
-    background: linear-gradient(90deg, var(--color-title-start) 0%, var(--color-title-end) 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-    -webkit-text-fill-color: transparent;
-    text-shadow: 0 0.21vw 0.21vw rgba(0, 0, 0, 0.25);
-}
-
-.title__line1 {
-    display: block;
-    font-size: 3.33vw;
-    margin-bottom: 0.5vw;
-    white-space: nowrap;
-}
-
-.title__line2 {
-    display: block;
-    font-size: 5.73vw;
-    white-space: nowrap;
-}
-
-/* ---------- enter button (splash only) ---------- */
-
-.btn-enter {
-    position: absolute;
-    left: 45%;
-    top: 86.2%;
-    width: 10.02%;
-    height: 5.67%;
-    border: 0.16vw solid var(--color-cream-border);
-    border-radius: 50vw;
-    background: linear-gradient(to bottom, var(--color-peach-1), var(--color-peach-2));
-    box-shadow: 0 0.57vw 0.8vw -0.05vw rgba(0, 0, 0, 0.25);
-    color: #fff;
-    font-family: var(--font-baloo);
-    font-size: 1.875vw;
-    cursor: pointer;
-    z-index: 5;
-    opacity: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    line-height: 1;
-    padding: 0;
-    transition: opacity 0.35s ease, transform 0.2s ease, background 0.25s ease;
-}
-
-.btn-enter:hover {
-    background: linear-gradient(to bottom, var(--color-hover-1), var(--color-hover-2));
-    transform: scale(1.05);
-}
-
-.main-container.settled .btn-enter {
+/* play / pause / replay all share ONE resting spot (center of the video panel) — GSAP
+   (index.js) crossfades play -> pause in place on click, and slides replay out from that same
+   spot to its final position beside pause, rather than the two just popping in together. */
+.btn-glow--video-play,
+.btn-glow--pause,
+.btn-glow--replay {
+    left: 46.8%;
+    top: 65.2%;
     opacity: 0;
     pointer-events: none;
 }
 
-/* ---------- back button (topics only) ---------- */
-
-.btn-back {
+.video-overlay-controls {
     position: absolute;
-    left: 3.33%;
-    top: 4%;
-    width: 2.69%;
-    aspect-ratio: 1 / 1;
+    inset: 0;
     z-index: 6;
-    filter: drop-shadow(0 0.2vw 0.1vw rgba(0, 0, 0, 0.25));
-    opacity: 0;
     pointer-events: none;
-    transition: opacity 0.4s ease 0.25s;
 }
 
-.btn-back img {
-    display: block;
-    width: 100%;
-    height: 100%;
-}
-
-.main-container.settled .btn-back {
-    opacity: 1;
-    pointer-events: auto;
-}
-
-/* ---------- topic pill list (topics only) ---------- */
-
-.pill-list {
+/* ===== bottom control bar (shaka-style), anchored inside the video panel ===== */
+.player-controls {
     position: absolute;
-    left: 63.1%;
-    top: 38.3%;
-    width: 21.9%;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 5;
     display: flex;
     flex-direction: column;
-    z-index: 5;
-    opacity: 0;
-    pointer-events: none;
-    transform: translateY(70vw);
-    /* back button: pills go down first, right away */
-    transition: opacity 0.5s ease, transform 1s var(--move-ease);
+    gap: 0.1vw;
+    padding: 0.208vw 0.729vw 0.833vw;
+    background-image: linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.1) 20%, rgba(0, 0, 0, 0.6) 60%, rgba(0, 0, 0, 0.9) 100%);
 }
 
-.main-container.settled .pill-list {
-    opacity: 1;
-    pointer-events: auto;
-    transform: translateY(0);
-    /* enter button: rise together with the title's vertical phase */
-    transition: opacity 0.6s ease 1.3s, transform 1.3s var(--move-ease) 1.3s;
-}
-
-.pill {
-    position: relative;
-    width: 100%;
-    aspect-ratio: 446 / 149;
-    margin-bottom: 4.9%;
-    background-image: url('../images/titletag.png');
-    background-size: 100% 100%;
-    background-repeat: no-repeat;
+.player-controls__row {
     display: flex;
     align-items: center;
-    justify-content: center;
-    text-decoration: none;
-    padding: 0 6%;
+    gap: 0.208vw;
+    width: 100%;
 }
 
-.pill:last-child {
-    margin-bottom: 0;
+.player-controls__icon-btn {
+    width: 1.25vw;
+    height: 1.25vw;
+    border: 0;
+    padding: 0;
+    background: none;
+    cursor: pointer;
+    flex: 0 0 auto;
 }
 
-.pill::after {
-    content: '';
+.player-controls__icon-btn img {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.player-controls__time {
+    padding: 0.417vw 0.208vw;
+    color: #fff;
+    font-family: "Poppins", sans-serif;
+    font-size: clamp(0.6vw, 0.729vw, 1vw);
+    white-space: nowrap;
+}
+
+.player-controls__spacer {
+    flex: 1 1 auto;
+}
+
+.player-controls__volume {
+    position: relative;
+    width: 5.625%;
+    height: 0.208vw;
+    margin: 0 0.417vw;
+}
+
+.player-controls__track {
     position: absolute;
     inset: 0;
-    background: linear-gradient(135deg, var(--color-hover-1), var(--color-hover-2));
-    -webkit-mask-image: url('../images/titletag.png');
-    mask-image: url('../images/titletag.png');
-    -webkit-mask-size: 100% 100%;
-    mask-size: 100% 100%;
-    -webkit-mask-repeat: no-repeat;
-    mask-repeat: no-repeat;
-    opacity: 0;
-    transition: opacity 0.25s ease;
-    pointer-events: none;
-    z-index: 0;
+    border-radius: 0.104vw;
+    background: rgba(255, 255, 255, 0.54);
 }
 
-.pill:hover::after {
-    opacity: 1;
+.player-controls__fill {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 100%;
+    border-radius: 0.104vw;
+    background: #fff;
 }
 
-.pill__text {
+.player-controls__handle {
+    position: absolute;
+    top: 50%;
+    left: 100%;
+    width: 0.52vw;
+    height: 0.52vw;
+    transform: translate(-50%, -50%);
+}
+
+.player-controls__volume {
+    cursor: pointer;
+    /* generous invisible hit area beyond the thin visual track, easier to grab/click */
+    padding: 0.6vw 0;
+}
+
+.player-controls__icon-btn.is-muted img {
+    opacity: 0.45;
+}
+
+.player-controls__seek {
     position: relative;
-    z-index: 1;
-    font-family: var(--font-krungthep);
-    color: var(--color-purple-text);
-    text-align: center;
-    text-shadow: 0 0.1vw 0.1vw rgba(0, 0, 0, 0.2);
-    font-size: 1.35vw;
-    line-height: 1.2;
-    transition: color 0.25s ease;
+    width: 100%;
+    height: 0.625vw;
+    cursor: pointer;
 }
 
-.pill:hover .pill__text {
-    color: #fff;
+.player-controls__seek-track {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
+    height: 0.208vw;
+    transform: translateY(-50%);
+    border-radius: 0.104vw;
+    background: rgba(255, 255, 255, 0.3);
 }
 
-/* ---------- language switch: restyled to match Figma (E/H/G pill) ---------- */
+.player-controls__seek-fill {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    height: 0.208vw;
+    width: 0%;
+    transform: translateY(-50%);
+    border-radius: 0.104vw;
+    background: #fff;
+}
 
+.player-controls__handle--seek {
+    top: 50%;
+    left: 0%;
+}
+
+/* ===== state machine =====
+   poster        → panel.png + arc.png cover bg-home.png; hovering/tapping the poster (index.js,
+                   GSAP) reveals the play button + title riding up inside the arc; video panel
+                   sits off-screen above, not yet interactive
+   video-ready   → play clicked: poster (panel+arc) has GSAP-slid off-screen, video panel has
+                   GSAP-slid down to rest (paused, single play icon)
+   video-playing → pause + replay icons shown, control bar reflects live playback */
+
+/* ===== language switch (E/H/G) — match Figma's `Lag` component =====
+   Figma shows an outlined, transparent pill (white 2px stroke, no fill) around three
+   white-ringed letters — not style.css's shared solid-orange pill. Overriding those specific
+   properties here (index.css loads after style.css, so same-specificity selectors win) rather
+   than editing the shared stylesheet, since that pill is used project-wide. */
 #language {
     background-color: transparent;
-    border: 0.104vw solid #775cd0;
-    border-radius: 50vw;
-    box-shadow: 0 0.21vw 0.1vw rgba(0, 0, 0, 0.25);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5vw;
-    padding: 0.5vw 0.8vw;
+    border: 0.156vw solid #fff;
 }
 
-#langSelect label {
-    padding: 0 !important;
+/* title pill (top banner): hidden until the video panel opens */
+.main-container:not([data-state="video-ready"]):not([data-state="video-playing"]) .title-pill {
+    opacity: 0;
+    pointer-events: none;
 }
 
-#langSelect label span {
-    width: 2.2vw;
-    height: 2.2vw;
-    border: 0.08vw solid #775cd0;
-    border-radius: 50%;
-    background: #fff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: 'Baloo', sans-serif;
-    font-size: 1.3vw;
-    color: #775cd0;
-    padding: 0;
-    overflow: visible;
-}
-
-#langSelect input:checked + span {
-    background-image: none;
-    background-color: #775cd0;
-    color: #fff;
-    border-radius: 50%;
-}
+/* No media queries: `.main-container` scales as one locked-aspect-ratio unit and never
+   rearranges on any viewport (project.md: identical layout on desktop, tablet, mobile). */

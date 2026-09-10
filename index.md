@@ -1,96 +1,129 @@
 # index.html — Build Instructions
 
 ## Navigation
-← from: (entry page — no previous)
-→ to: jeev.html (paused — Figma link not yet provided) and 3 not-yet-built topic pages
+← from: (entry point — no previous page)
+→ to: (single-page video slate, no other pages; states are transitions within this page)
 
-## Correction note (read first)
-Frames 2 and 3's raw Figma export data include a "TITLE / TEXT BOX / photo-frame / next-prev arrow"
-node cluster (ribbon "What is Punya?", paragraph text, decorative photo card). Screenshots of both
-frames confirm this cluster is positioned off-canvas and is **not visible** in either frame — it is
-excluded from the build entirely. Ground truth = the screenshots, not the raw exported coordinates,
-wherever the two disagree (this cluster is the only place they disagreed).
+## Notes on scope (read first)
+- This is a single "video slate" screen with 4 Figma frames that represent **states of the same
+  screen**, not 4 separate pages: idle poster → ready/poster-with-controls → playing (expanded) →
+  paused/expanded-with-replay.
+- Open items carried over from Figma (flag, do not silently invent): the Hindi/Gujarati title text
+  is not provided (only English "Meghkumar" exists in the design) — use the English text for all
+  three `.english/.hindi/.gujrati` spans until real translations are supplied. No real video file
+  is attached in Figma — wire the `<video>` element to a placeholder/poster image and leave the
+  `src` empty with a clear comment, do not break layout.
 
-## Structure decision
-Frames 1 → 2 → 3 form one onboarding sequence, not three separate pages:
-- Frame 1: splash (centered mascot + title + Enter button)
-- Frame 2: transitional state — mascot/heading have moved to the left-aligned "topics" position,
-  heading only, pills not yet visible
-- Frame 3: settled state — same left-aligned layout as Frame 2, plus 3 topic pills
-
-Frame 2 has no unique static content beyond a mid-transition layout, so it is implemented as the
-"settle" animation (CSS transition) from splash → topics rather than its own dead-end section.
-index.html therefore has 2 sections: `#section-splash` (Frame 1) and `#section-topics` (Frame 3,
-which visually contains Frame 2's layout plus the pills).
-
-## Frame 1 Guidelines (Splash / Enter screen)
-  1- read frame 1 from figma mcp local server https://www.figma.com/design/KT4dkzEVW0He32Hpl6qB5l/9-Types-of-Punya-Bandh?node-id=17-454&m=dev (node-id=17:454)
+## Frame 1 Guidelines — node-id=1-1057 (idle poster state)
+  1- read frame 1 from figma mcp local server https://www.figma.com/design/cU8RBPhJ1fuaCRZc43UApz/Story-Video-slates?node-id=1-1057&m=dev
      for image reference use @assets/images/
 
-    1.1- BG — assets/images/bg-1.png, full-bleed cover, position absolute inset:0
+    1.1- `home` (root frame, 12px #fffec8 border, 45px radius) — full-bleed background photo (mother
+         and baby), use @assets/images/bg2.png or bg 4 1.png (verify against Figma screenshot — pick
+         whichever matches the palace/curtain scene; both are candidates in assets/images)
+      1.1.1- rounded corners + cream border wrap the entire slate frame
 
-    1.2- FL1 / FL2 — large rotated flower-petal decorative graphics, symmetric behind mascot
-      1.2.1- FL1: assets/images/fl-1.png — size 178.97vw square, left 50.0%, top 51.95% (center), rotate -72.64deg
-      1.2.2- FL2: assets/images/fl-2.png — size 50.17vw square, left 119.6%, top 1.1%, rotate -72.64deg, opacity 35%
+    1.2- `_video-16:9` panel — small collapsed video box (567px tall in design), white 12px border,
+         30px radius, drop shadow — this is the not-yet-expanded video container
+      1.2.1- inside: shaka-player-control bar (time "0:15 / 10:35", play button, volume slider,
+             playback slider, fullscreen + more buttons) — hidden/inactive in this idle frame
+             (kept in DOM for the expanded states, class it as `.player-controls`)
 
-    1.3- mascot group (centered) — assets/images/shadow-intro.svg, seat-mat-intro.svg, boy-meditating.png
-      1.3.1- boy image: left 39.67%, top 7.87%, width 20.05%, height 54.75%
-      1.3.2- seat mat: left 36.61%, top 51.72%, width 26.72%, height 10.86%
-      1.3.3- shadow ellipse: left 39.44%, top 58.69%, width 21.11%, height 2.59%
-      1.3.4- divider line (#dfd0de): left 36.66%, top 62.58%, width 26.67%, height 0.567vw
-      1.3.5- stack order back→front: shadow → seat mat → divider line → boy
+    1.3- decorative curtain/arch image (`Rectangle 7`) behind video panel — @assets/images/Rectangle 7.png
+    1.4- bottom floor/vignette strip (`Rectangle 5`) — full width, bottom of frame — @assets/images/Rectangle 5.png
 
-    1.4- title text: left 24.0%, top 65.6%, width 52.0%, centered
-      1.4.1- line 1 "9 Types of" font-size clamp(~3.33vw), line 2 "Punya Bandh" font-size clamp(~5.73vw)
-      1.4.2- font News701 BT Bold (fallback: Georgia/serif bold — font file not in /fonts, flagged)
-      1.4.3- gradient text fill, radial purple→magenta: #4222aa → #5e25a5 → #7928a1 → #b12d99
-      1.4.4- text-shadow 0 4px 4px rgba(0,0,0,0.25)
-      1.4.5- render via .english/.hindi/.gujrati spans — Hindi/Gujarati copy not in Figma text nodes, English used as placeholder for all 3 until translated strings supplied (flagged)
+    1.5- `tittle 1` group — large "Meghkumar" title (180px Spirax font, white, text-shadow,
+         letter-spacing -7.2px), currently `opacity:0` in this frame (title is not shown yet at
+         this stage) — build the element but keep it hidden via `.title-large.is-hidden`
+      1.5.1- left/right flourish icons either side of title (`Isolation_Mode`), also opacity:0 —
+             @assets/images/decoleft.png / decoright.png
 
-    1.5- Enter button: left 45.0%, top 86.2%, width 10.02%, height 5.67%
-      1.5.1- gradient bg #ffd0a9 → #ffa659, border 0.16vw solid #fff2e2, rounded full (border-radius 50vw), drop-shadow 0 11px 15.4px rgba(0,0,0,0.25)
-      1.5.2- label "Enter" — font Baloo Regular (assets/fonts — file present), white, centered, font-size clamp(~1.875vw)
+    1.6- big center play-button ellipse (`Ellipse 12`) behind the play icon — decorative glow circle
+    1.7- `Lag` (language switch pill, E/H/G circles) — `opacity:0` in this frame (hidden until ready
+         state) — class `.lang-switch.is-hidden`
+    1.8- `Home` icon top-left — fully visible — @assets/images/HOME.png, class `[left-corner]`
+         (never touch per global rules)
+    1.9- `ButtonPlay1` / `ButtonPlay2` (two stacked play-icon states) — layered center play button,
+         visible — @assets/images/play.png
 
-    1.6- on click of Enter → add "settled" state class to page (triggers CSS transition of mascot+heading from centered/splash position to left-aligned/topics position), hide Enter button + splash-only decor, reveal back button + pills
+    1.10- on click of the video panel / big play button → transition to Frame 3 state (expand video,
+          start playing)
 
-## Frame 2 Guidelines (transitional layout — folded into Frame 3's section, see Structure decision)
-  2- read frame 2 from figma mcp local server https://www.figma.com/design/KT4dkzEVW0He32Hpl6qB5l/9-Types-of-Punya-Bandh?node-id=1-2&m=dev (node-id=1:2)
+## Frame 2 Guidelines — node-id=1-1080 (ready state, title collapses to top pill)
+  2- read frame 2 from figma mcp local server https://www.figma.com/design/cU8RBPhJ1fuaCRZc43UApz/Story-Video-slates?node-id=1-1080&m=dev
 
-    2.1- confirms left-aligned mascot position (same coordinates as 3.2) and heading-only state (no pills yet) —
-         implemented purely as the CSS starting-state of the transition described in 1.6; no separate markup
+    2.1- same `_video-16:9` collapsed panel as frame 1 (567px), still not expanded
+    2.2- `tittle 1` large title — now visible (no opacity:0), still 180px, same position as frame 1
+    2.3- new `text box` + `tittle` group at TOP of frame — a pill-shaped banner (890px wide, red/maroon
+         gradient `#dc3d40 → #620002`, white 4px border, 84px radius) containing the SAME title text
+         at smaller size (120px), with the same flourish icons either side — @assets/images/decoleft.png,
+         decoright.png
+      2.3.1- this is the "title pill" that will persist once the video expands (frames 3 & 4) — build
+             it as `.title-pill` positioned top-center, visible across ready/playing/paused states
+    2.4- `Lag` (language switch, E/H/G) — now fully visible top-right — class `.lang-switch`
+    2.5- `Home` icon top-left — visible — unchanged from frame 1
+    2.6- two stacked play-button layers (`_button-play 7`, `_button-play 6`) — visible over the poster
+      2.6.1- these replace the frame-1 play icon graphics — @assets/images/play.png (verify exact
+             icon vs assets/images/refresh.png if Figma shows a re-try affordance)
 
-## Frame 3 Guidelines ("topics" section — settled state with pill list)
-  3- read frame 3 from figma mcp local server https://www.figma.com/design/KT4dkzEVW0He32Hpl6qB5l/9-Types-of-Punya-Bandh?node-id=17-666&m=dev (node-id=17:666)
-     for image reference use @assets/images/
+    2.7- on click of play button → transition to Frame 3 state (video expands to 1281×737, controls bar
+         becomes active)
 
-    3.1- global chrome
-      3.1.1- back button: assets/images/back-arrow.svg, class [left-corner], left 3.33%, top 3.80%, width 2.69%, links → back to #section-splash
-      3.1.2- language switch: reuse existing #langSelect markup from basic-template.html verbatim (class [language], never rebuild/restyle)
-      3.1.3- BG: assets/images/bg-1.png, same as 1.1
+## Frame 3 Guidelines — node-id=1-1103 (playing / expanded state)
+  3- read frame 3 from figma mcp local server https://www.figma.com/design/cU8RBPhJ1fuaCRZc43UApz/Story-Video-slates?node-id=1-1103&m=dev
 
-    3.2- FL1 / FL2 — smaller, left-weighted (distinct from Frame 1's symmetric version)
-      3.2.1- FL1: assets/images/fl-1.png — size 76.8vw square, left 17.77%, top 50%, rotate -72.64deg
-      3.2.2- FL2: assets/images/fl-2.png — size 50.17vw square, left 99.3%, top 1.1%, rotate -72.64deg, opacity 35%
+    3.1- `_video-16:9` panel now EXPANDED — 1281px wide × 737px tall, centered, white 12px border,
+         30px radius, drop shadow — class `.video-panel.is-expanded`
+      3.1.1- `shaka-player-control` bar now ACTIVE inside the panel (bottom-anchored, gradient
+             scrim, time text "0:15 / 10:35", play icon, volume slider w/ handle, playback
+             slider w/ handle + buffer fill, fullscreen icon, more (⋮) icon)
+        3.1.1.1- play/pause icon in the control bar — @assets/images/figma-pause-icon.svg (or
+                 pause.png), toggles state on click
+    3.2- `title-pill` (top banner, same as frame 2.3) — persists, unchanged position
+    3.3- `Lag` (E/H/G language switch) — unchanged, top-right
+    3.4- `Home` icon — unchanged, top-left
+    3.5- large `Ellipse 12` glow circle + single centered play icon over the video (paused-preview
+         affordance before actual playback starts) — @assets/images/play.png
 
-    3.3- mascot group (left-aligned) — same assets as 1.3 but different sizing/position + different mat/shadow art
-      3.3.1- boy image: left 6.72%, top 18.43%, width 22.92%, height 62.5%
-      3.3.2- seat mat: assets/images/seat-mat.svg — left 3.23%, top 68.51%, width 30.52%, height 12.41%
-      3.3.3- shadow ellipse: assets/images/shadow.svg — left 6.46%, top 76.48%, width 24.11%, height 2.96%
-      3.3.4- divider line: left 3.28%, top 80.93%, width 30.47%, height 0.648vw
+    3.6- on click of the center play icon or control-bar play/pause button → toggle to Frame 4
+         state (paused overlay with replay/pause icons)
+    3.7- on click of control-bar play icon while playing → pause (show Frame 4 overlay)
 
-    3.4- heading: left 48.0%, top 14.5%, width 52.0% — same style as 1.4 (line1 "9 Types of", line2 "Punya Bandh")
+## Frame 4 Guidelines — node-id=1-1126 (paused / replay overlay state)
+  4- read frame 4 from figma mcp local server https://www.figma.com/design/cU8RBPhJ1fuaCRZc43UApz/Story-Video-slates?node-id=1-1126&m=dev
 
-    3.5- topic pill stack (below heading, right side) — 3 pills, no distinct "active" style found in source data, all rendered identically
-      3.5.1- pill shape: assets/images/pill-shape.svg background, font Krungthep Regular (fallback: rounded sans — file not in /fonts, flagged), color #7a32a1, text-shadow 0 2px 2px rgba(0,0,0,0.2)
-      3.5.2- shared box size: width 21.9%, height 12.1%, left 63.1%
-      3.5.3- pill 1: top 38.3% — "What is Punya & Paap ?" → placeholder link, target page not yet built
-      3.5.4- pill 2: top 55.1% — "What do we earn from Punya?" → placeholder link, target page not yet built
-      3.5.5- pill 3: top 71.9% — "9 types of Punya Bandh" → placeholder link (overview), target page not yet built
-      3.5.6- render each label via .english/.hindi/.gujrati spans (English placeholder for all 3 langs, flagged, same as 1.4.5)
+    4.1- `_video-16:9` panel — same expanded size as frame 3 (1281×737)
+    4.2- TWO center icons side by side over the video: `ButtonPlay1` (pause icon, left,
+         @assets/images/pause.png) and a second button (`_button-play 6`, right,
+         @assets/images/refresh.png) — this is the paused state showing "pause" + "replay/skip"
+         controls together
+      4.2.1- clicking the left (pause) icon → resumes playback → back to Frame 3 state
+      4.2.2- clicking the right (refresh) icon → restarts video from 0:00, resumes Frame 3 state
+    4.3- `title-pill` top banner — unchanged, persists
+    4.4- `Lag` (E/H/G) — unchanged, top-right
+    4.5- `Home` icon — unchanged, top-left
+    4.6- control bar at bottom of video panel — same as frame 3, reflects paused playback position
 
-## Open items (flagged, not blocking build)
-  - Hindi / Gujarati copy not present in any Figma text node read so far — English used as placeholder in all `.english/.hindi/.gujrati` spans until translated strings are supplied.
-  - Fonts "Krungthep" and "News701 BT Bold" are referenced by the design but their font files are not in /fonts (only Baloo, ITFDevanagari, NotoSansGujarati are present) — using close system-font fallbacks, noted in CSS comments, until the real font files are supplied.
-  - The 3 pills have no destination frame in figma-links.md yet — rendered as inert (non-navigating, `href="#"`) list items.
-  - jeev.html Frame 5 (node-id=2-18) has no Figma URL in figma-links.md — build paused for that page per user instruction.
-  - The off-canvas "TITLE/TEXT BOX/photo-frame" cluster present in Frames 2 & 3's raw export (ribbon "What is Punya?", paragraph "When one performs good deeds...") is NOT part of either frame's visible design (confirmed via screenshot) and was intentionally omitted — see Correction note above.
+## Global / cross-frame elements — never touch, build once
+    - `[bg-img]` full-bleed background photo — shared across all 4 states (Frame 1.1)
+    - `[left-corner]` Home icon link → `./index.html` — shared across all 4 states
+    - `[language]` E/H/G switch — hidden only in Frame 1 (poster idle), visible in Frames 2–4
+
+## State machine summary (as implemented in index.js / index.css)
+    - `data-state="poster"` → panel.png (front layer, mother+baby art) + arc.png (bottom layer)
+      cover bg-home.png (back layer) at rest — Frame 1's bare-poster look. Hovering (or tapping,
+      on touch) the poster reveals the play button and slides the title (+ decoleft/decoright
+      flourishes) up from inside the arc — all via GSAP (assets/plugins/gsap.min.js), not CSS
+      transitions, per the animation spec.
+    - Play click → GSAP timeline: arc.png slides down off-screen, panel.png slides up
+      off-screen simultaneously (both clipped by `.main-container`'s own overflow:hidden),
+      revealing bg-home.png underneath; the video panel — parked off-screen above at rest —
+      then slides down to center. `data-state="video-ready"` once this settles: video panel
+      visible with a single center play icon (paused, not yet started) — Frame 3.
+    - `data-state="video-playing"` → pause + replay icons shown together, video element
+      actually playing — Frame 4. Reached by clicking the single play icon.
+    - Transitions: poster → video-ready (poster play click, GSAP slide sequence) →
+      video-playing (video play click) → video-ready (pause click, or video reaches its end)
+      → video-playing (replay click, seeks to 0 and keeps playing)
+    - Title pill (top banner) fades in (plain CSS opacity transition) once `video-ready` is
+      reached, and stays visible through `video-playing`.

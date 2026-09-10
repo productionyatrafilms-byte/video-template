@@ -1,4 +1,44 @@
 
+@font-face {
+    font-family: "Baloo";
+    src: url("../../fonts/Baloo Regular 400.ttf") format("truetype");
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "ITFDevanagari";
+    src: url("../../fonts/ITFDevanagari-Bold-02.otf") format("opentype");
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "NotoSansGujarati";
+    src: url("../../fonts/NotoSansGujarati-Regular.ttf") format("truetype");
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "NotoSansGujarati";
+    src: url("../../fonts/NotoSansGujarati-Bold.ttf") format("truetype");
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Berkshire Swash";
+    src: url("../../fonts/BerkshireSwash-Regular.ttf") format("truetype");
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -17,6 +57,21 @@ body {
     overflow: hidden auto;
 }
 
+/* Per-language type family — every visible text node is rendered three times (.english/.hindi/
+   .gujrati spans per project.md rule 4); the language decides the font, not the element. */
+.english {
+    font-family: "Baloo", cursive, sans-serif;
+}
+
+.hindi {
+    font-family: "ITFDevanagari", "Noto Sans Devanagari", sans-serif;
+    font-weight: 700;
+}
+
+.gujrati {
+    font-family: "NotoSansGujarati", sans-serif;
+}
+
 /* djp.js injects this button expecting a close.png asset we don't have */
 .back-button {
     display: none !important;
@@ -24,7 +79,7 @@ body {
 
 /* top right fixed language bar */
 #language {
-    background-color: #4e9ebf;
+    background-color: #FD8F1C;
     border-radius: 4vw;
     text-align: center;
     display: flex;

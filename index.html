@@ -4,12 +4,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>9 Types of Punya Bandh</title>
+    <title>Meghkumar</title>
     <link rel="stylesheet" href="./assets/css/style.css">
     <link rel="stylesheet" href="./assets/css/index.css">
 </head>
 
-<body id="body">
+<body id="body" class="index-page">
     <div id="langSelect">
         <div id="language">
             <label><input type="radio" onclick="val('English')" name="lang" id="en" value="English">
@@ -24,70 +24,116 @@
         </div>
     </div>
 
-    <img class="bg-img" src="./assets/images/bg-1.png" alt="">
+    <a href="./index.html" class="left-corners btn-home" id="btnHome">
+        <img src="./assets/images/HOME.png" alt="Home">
+    </a>
 
-    <div class="main-container" id="mainContainer">
+    <!-- [bg-img] back layer — position:fixed, full-viewport, OUTSIDE `.main-container` (which
+         stays locked to the 1920:1080 frame for the video panel + title pill only). Sibling of
+         `.main-container`, painted behind it (z-index). -->
+    <div class="bg-layer" id="bgLayer">
+        <div class="bg-img">
+            <img class="bg-room" src="./assets/images/bg-home.png" alt="">
+        </div>
 
-        <div class="decor fl1" aria-hidden="true">
-            <div class="decor__spin">
-                <img src="./assets/images/FL2.png" alt="">
+        <!-- poster — panel.png (front layer, the mother-and-baby art) + arc.png (bottom layer)
+             together cover bg-home.png at rest; both slide fully off-screen (panel up, arc down)
+             when play is clicked, via GSAP (index.js) -->
+        <div class="poster" id="poster">
+            <img class="poster__panel" id="posterPanel" src="./assets/images/panel.png" alt="Meghkumar and her newborn">
+
+            <div class="poster__arc" id="posterArc">
+                <img class="poster__arc-bg" src="./assets/images/arc.png" alt="">
+
+                <!-- title — hidden below the arc at rest, slides up into view on hover/tap
+                     (index.js), riding along with the arc when it exits on play click -->
+                <div class="poster__title" id="posterTitle">
+                    <img class="poster__title-flourish poster__title-flourish--left" src="./assets/images/decoleft.png" alt="">
+                    <p class="poster__title-text">
+                        <span class="english">Meghkumar</span>
+                        <span class="hindi">Meghkumar</span>
+                        <span class="gujrati">Meghkumar</span>
+                    </p>
+                    <img class="poster__title-flourish poster__title-flourish--right" src="./assets/images/decoright.png" alt="">
+                </div>
+            </div>
+
+            <!-- poster play button — fades in on hover/tap, sits above the panel/arc -->
+            <button type="button" class="btn-glow btn-glow--poster" id="btnPosterPlay" aria-label="Play video">
+                <img src="./assets/images/play.png" alt="">
+            </button>
+        </div>
+    </div>
+
+    <div class="main-container" id="mainContainer" data-state="poster">
+
+        <!-- title pill — top banner, node 1:1106/1:1107/1:1112 (frames 2-4), fades in once the
+             video panel opens -->
+        <div class="title-pill" id="titlePill">
+            <img class="title-pill__flourish title-pill__flourish--left" src="./assets/images/decoleft.png" alt="">
+            <p class="title-pill__text">
+                <span class="english">Meghkumar</span>
+                <span class="hindi">Meghkumar</span>
+                <span class="gujrati">Meghkumar</span>
+            </p>
+            <img class="title-pill__flourish title-pill__flourish--right" src="./assets/images/decoright.png" alt="">
+        </div>
+
+        <!-- video panel — node 1:1109/1:1129 (frames 3 & 4), hidden until playback starts -->
+        <div class="video-panel" id="videoPanel">
+            <video class="video-panel__media" id="slateVideo" poster="" playsinline>
+                <!-- no dedicated Meghkumar video file was supplied in Figma — reusing the
+                     project's placeholder clip until the real asset is exported -->
+                <source src="./assets/videos/1.mp4" type="video/mp4">
+            </video>
+
+            <button type="button" class="btn-glow btn-glow--video-play" id="btnVideoPlay" aria-label="Play video">
+                <img src="./assets/images/play.png" alt="">
+            </button>
+
+            <div class="video-overlay-controls" id="videoOverlayControls">
+                <button type="button" class="btn-glow btn-glow--pause" id="btnVideoPause" aria-label="Pause video">
+                    <img src="./assets/images/pause.png" alt="">
+                </button>
+                <button type="button" class="btn-glow btn-glow--replay" id="btnVideoReplay" aria-label="Replay video">
+                    <img src="./assets/images/refresh.png" alt="">
+                </button>
+            </div>
+
+            <div class="player-controls">
+                <div class="player-controls__row">
+                    <button type="button" class="player-controls__icon-btn" id="btnBarToggle" aria-label="Play/Pause">
+                        <img src="./assets/images/figma-pause-icon.svg" alt="">
+                    </button>
+                    <span class="player-controls__time" id="playerTime">0:00 / 10:35</span>
+                    <span class="player-controls__spacer"></span>
+                    <button type="button" class="player-controls__icon-btn" id="btnMute" aria-label="Mute">
+                        <img src="./assets/images/icon-mute.svg" alt="">
+                    </button>
+                    <div class="player-controls__volume" id="volumeSlider">
+                        <div class="player-controls__track"></div>
+                        <div class="player-controls__fill" id="volumeFill"></div>
+                        <img class="player-controls__handle" id="volumeHandle" src="./assets/images/icon-slider-handle.svg" alt="">
+                    </div>
+                    <button type="button" class="player-controls__icon-btn" id="btnFullscreen" aria-label="Fullscreen">
+                        <img src="./assets/images/icon-fullscreen.svg" alt="">
+                    </button>
+                    <button type="button" class="player-controls__icon-btn" aria-label="More">
+                        <img src="./assets/images/icon-more.svg" alt="">
+                    </button>
+                </div>
+                <div class="player-controls__seek" id="seekSlider">
+                    <div class="player-controls__seek-track"></div>
+                    <div class="player-controls__seek-fill" id="seekFill"></div>
+                    <img class="player-controls__handle player-controls__handle--seek" id="seekHandle" src="./assets/images/icon-slider-handle.svg" alt="">
+                </div>
             </div>
         </div>
-        <div class="decor fl2" aria-hidden="true">
-            <div class="decor__spin">
-                <img src="./assets/images/FL2.png" alt="">
-            </div>
-        </div>
-
-        <a href="#" class="left-corner btn-back" id="btnBack">
-            <img src="./assets/images/back.png" alt="Back">
-        </a>
-
-        <div class="mascot" data-name="mascot">
-            <img class="mascot__boy" src="./assets/images/boy-meditating.png" alt="Boy meditating with folded hands">
-        </div>
-
-        <h1 class="title">
-            <span class="title__line1">
-                <span class="english">9 Types of</span>
-                <span class="hindi">९ प्रकार के</span>
-                <span class="gujrati">૯ પ્રકારના</span>
-            </span>
-            <span class="title__line2">
-                <span class="english">Punya Bandh</span>
-                <span class="hindi">पुण्य बंध</span>
-                <span class="gujrati">પુણ્ય બંધ</span>
-            </span>
-        </h1>
-
-        <button type="button" class="btn-enter" id="btnEnter">
-            <span class="english">Enter</span>
-            <span class="hindi">Enter</span>
-            <span class="gujrati">Enter</span>
-        </button>
-
-        <nav class="pill-list">
-            <a href="./define.html" class="pill" data-topic="punya-paap">
-                <span class="pill__text english">What is Punya &amp; Paap?</span>
-                <span class="pill__text hindi">पुण्य और पाप क्या है?</span>
-                <span class="pill__text gujrati">પુણ્ય અને પાપ શું છે?</span>
-            </a>
-            <a href="./earn.html" class="pill" data-topic="earn-punya">
-                <span class="pill__text english">What do we earn from Punya?</span>
-                <span class="pill__text hindi">पुण्य से हमें क्या मिलता है ?</span>
-                <span class="pill__text gujrati">પુણ્યથી આપણને શું મળે છે?</span>
-            </a>
-            <a href="./types.html" class="pill" data-topic="overview">
-                <span class="pill__text english">9 types of Punya Bandh</span>
-                <span class="pill__text hindi">९ प्रकार के पुण्य बंध</span>
-                <span class="pill__text gujrati">૯ પ્રકારના પુણ્ય બંધ</span>
-            </a>
-        </nav>
 
     </div>
 
-    <script src="./assets/js/djp.js"></script>
     <script src="./assets/js/jquery-3.7.1.js"></script>
+    <script src="./assets/plugins/gsap.min.js"></script>
     <script src="./assets/js/custom.js"></script>
     <script src="./assets/js/index.js"></script>
 </body>
