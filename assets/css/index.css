@@ -149,7 +149,7 @@ body.index-page {
     color: #fff;
     text-align: center;
     text-shadow: 0 0.208vw 0.208vw rgba(0, 0, 0, 0.25);
-    font-size: clamp(3.5vw, 7vw, 9vw);
+    font-size: 5vw;
     letter-spacing: -0.3vw;
     white-space: nowrap;
 }
@@ -216,7 +216,7 @@ body.index-page {
     color: #fff;
     text-align: center;
     text-shadow: 0 0.208vw 0.208vw rgba(0, 0, 0, 0.25);
-    font-size: clamp(2.4vw, 4.6vw, 6vw);
+    font-size: 3vw;
     letter-spacing: -0.2vw;
     white-space: nowrap;
 }
