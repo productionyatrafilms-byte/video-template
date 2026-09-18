@@ -14,6 +14,26 @@ function val(selectedLang) {
     let Hindi = document.getElementById("hi");
     let Gujrati = document.getElementById("gu");
 
+    // slate video is English-only for "English", shared Hindi/Gujarati clip otherwise
+    let slateVideo = document.getElementById("slateVideo");
+    if (slateVideo) {
+        var videoSrc = selectedLang === "English" ? "./assets/videos/1.mp4" : "./assets/videos/1hi.mp4";
+        var source = slateVideo.querySelector("source");
+        var currentSrc = source ? source.getAttribute("src") : slateVideo.getAttribute("src");
+        if (currentSrc !== videoSrc) {
+            var wasPlaying = !slateVideo.paused;
+            if (source) {
+                source.setAttribute("src", videoSrc);
+            } else {
+                slateVideo.setAttribute("src", videoSrc);
+            }
+            slateVideo.load();
+            if (wasPlaying) {
+                slateVideo.play().catch(function () {});
+            }
+        }
+    }
+
     if (selectedLang === "English") {
 
         document.getElementById("body");
