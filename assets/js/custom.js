@@ -17,13 +17,15 @@ function val(selectedLang) {
     // slate video is English-only for "English", shared Hindi/Gujarati clip otherwise
     let slateVideo = document.getElementById("slateVideo");
     if (slateVideo) {
-        var videoSrc = selectedLang === "English" ? "./assets/videos/1.mp4" : "./assets/videos/1hi.mp4";
+        var videoSrc = selectedLang === "English" ? "./assets/videos/1.webm" : "./assets/videos/1hi.webm";
+        var videoType = videoSrc.endsWith(".webm") ? "video/webm" : "video/mp4";
         var source = slateVideo.querySelector("source");
         var currentSrc = source ? source.getAttribute("src") : slateVideo.getAttribute("src");
         if (currentSrc !== videoSrc) {
             var wasPlaying = !slateVideo.paused;
             if (source) {
                 source.setAttribute("src", videoSrc);
+                source.setAttribute("type", videoType);
             } else {
                 slateVideo.setAttribute("src", videoSrc);
             }
@@ -80,6 +82,15 @@ document.addEventListener('DOMContentLoaded', function () {
             audio.pause();
             audio.currentTime = 0;
             audio.play().catch(function () {});
+        });
+    });
+
+    // start / play / pause / replay button click sound
+    var clickAudio = new Audio('./assets/audio/click.mp3');
+    document.querySelectorAll('#btnPosterPlay, #btnVideoPlay, #btnVideoPause, #btnVideoReplay').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            clickAudio.currentTime = 0;
+            clickAudio.play().catch(function () {});
         });
     });
 
