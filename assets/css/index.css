@@ -361,7 +361,7 @@ body.index-page {
 .player-controls__time {
     padding: 0.417vw 0.208vw;
     color: #fff;
-    font-family: "Poppins", sans-serif;
+    font-family: "Baloo", cursive, sans-serif;
     font-size: clamp(0.6vw, 0.729vw, 1vw);
     white-space: nowrap;
 }
