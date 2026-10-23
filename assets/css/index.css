@@ -1,0 +1,467 @@
+/* index.html — "Meghkumar" video slate
+   Built from Figma nodes 1:1057 (idle), 1:1080 (ready/poster), 1:1103 (video ready),
+   1:1126 (video playing) on the Story-Video-slates file. See index.md for the per-frame
+   breakdown and the state-machine rationale.
+
+   Title font: Spirax for the `.english` span (Figma's own spec), ITFDevanagari for `.hindi`
+   and NotoSansGujarati for `.gujrati` — the latter two already come from style.css's shared
+   @font-face rules, only Spirax is new/page-specific here. */
+
+@font-face {
+    font-family: "Spirax";
+    src: url("../../fonts/Spirax-Regular.ttf") format("truetype");
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+:root {
+    --color-pill-from: #af3ddc;
+    --color-pill-to: #2e0062;
+    --color-panel-border: #ffffff;
+}
+
+/* ===== page shell =====
+   `.main-container` stays locked to Figma's 1920:1080 canvas as one proportional unit — it now
+   holds only the video panel + title pill, which still need to scale together like a Figma
+   preview (project.md: no px/rem/em/pt/vh, proportional scaling only). The background/poster
+   layer below is deliberately NOT part of this locked box (see `.bg-layer`). */
+html {
+    overflow: hidden;
+}
+
+body.index-page {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background: #000;
+}
+
+.main-container {
+    position: relative;
+    z-index: 1;
+    width: min(100%, 177.78vh);
+    aspect-ratio: 1920 / 1080;
+    margin: 0 auto;
+    overflow: hidden;
+    /* transparent + empty outside its own children's boxes — without this it would sit on top
+       of (and silently block hover/click on) the poster/panel/arc in `.bg-layer` underneath.
+       `.video-panel.is-interactive` (below) re-enables pointer-events for itself and its
+       descendants once the video panel actually needs to be clickable. */
+    pointer-events: none;
+}
+
+/* ===== [bg-img] shared background + poster — never touch =====
+   Sits OUTSIDE `.main-container`, `position:fixed` across the whole viewport (not locked to the
+   16:9 frame) — same technique this project already uses elsewhere for full-bleed background
+   layers: it crops to fill wider/narrower screens rather than letterboxing, which is an accepted
+   trade-off for a background layer. `.main-container` (z-index 1) still paints on top of it. */
+.bg-layer {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+}
+
+.bg-img {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+}
+
+.bg-room {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* ===== poster (panel.png + arc.png) =====
+   Both fully cover bg-home.png at rest. GSAP (index.js) drives every transform on this group:
+   the hover reveal of the title/play button, and the panel-up / arc-down exit on play click.
+   Base position here is the resting (on-screen) placement only — no transform authored in CSS,
+   so GSAP owns the transform property outright (mixing GSAP tweens with a CSS `transform`
+   declared in the stylesheet causes GSAP to silently discard the CSS one on its first tween). */
+.poster {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+}
+
+.poster__panel {
+    position: absolute;
+    left: 0%;
+    top: -2%;
+    width: 100%;
+    height: 100vh;
+    z-index: 1;
+    object-fit: cover;
+    display: block;
+}
+
+.poster__arc {
+    position: absolute;
+    left: -0.625%;
+    top: 75.26%;
+    width: 100.63%;
+    height: 28.98%;
+    z-index: 2;
+}
+
+.poster__arc-bg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    pointer-events: none;
+}
+
+/* title — rides along with the arc (nested inside it), positioned relative to the arc's own
+   box; GSAP sets its resting (hidden, shifted down) and revealed (hover) transforms. */
+.poster__title {
+    position: absolute;
+    left: 50%;
+    top: 54.8%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1vw;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.poster__title-flourish {
+    display: block;
+    width: 4.6vw;
+    height: auto;
+}
+
+.poster__title-text {
+    margin: 0;
+    color: #FFE761;
+    text-align: center;
+    text-shadow: 0 0.208vw 0.208vw rgba(0, 0, 0, 0.25);
+    font-size: 5vw;
+    letter-spacing: -0.3vw;
+    white-space: nowrap;
+}
+
+/* ===== [left-corner] home icon — never touch =====
+   Only shown once the video panel is open (video-ready/video-playing), not on the bare poster —
+   toggled via the `.is-visible` class (index.js, same pattern as #langSelect) rather than a CSS
+   sibling selector, since this element sits BEFORE `.main-container` in the DOM. */
+.btn-home {
+    position: absolute;
+    left: 2.71%;
+    top: 4.12%;
+    width: 3.125%;
+    z-index: 999999;
+    display: block;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.btn-home.is-visible {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.btn-home img {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+/* ===== title pill (top banner, frames 2-4) ===== */
+.title-pill {
+    position: absolute;
+    left: 27.04%;
+    top: 3.005%;
+    width: 46.4%;
+    height: 15.62%;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1vw;
+    background: linear-gradient(180deg, var(--color-pill-from), var(--color-pill-to));
+    opacity: 0.92;
+    border: 0.208vw solid #fff;
+    border-radius: 4.39vw;
+    box-shadow: 0 0.208vw 0.208vw rgba(0, 0, 0, 0.25);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.title-pill__flourish {
+    display: block;
+    width: 4.29vw;
+    height: auto;
+}
+
+.title-pill__text {
+    margin: 0;
+    color: #FFE761;
+    text-align: center;
+    text-shadow: 0 0.208vw 0.208vw rgba(0, 0, 0, 0.25);
+    font-size: 3vw;
+    letter-spacing: -0.2vw;
+    white-space: nowrap;
+}
+
+/* per-language title font — Spirax (English, per Figma) layers on top of style.css's shared
+   .hindi (ITFDevanagari) / .gujrati (NotoSansGujarati) rules, which already apply everywhere */
+.poster__title-text .english,
+.title-pill__text .english {
+    font-family: "Spirax", cursive;
+}
+
+/* ===== poster play button (over the background art, before the video panel opens) ===== */
+.btn-glow {
+    position: absolute;
+    z-index: 6;
+    width: 5.6vw;
+    height: 5.6vw;
+    border: 0;
+    padding: 0;
+    background: none;
+    cursor: pointer;
+    filter: drop-shadow(0 0.208vw 0.104vw rgba(0, 0, 0, 0.25));
+    transition: transform 0.2s ease;
+}
+
+.btn-glow:hover {
+    transform: scale(1.08);
+}
+
+.btn-glow img {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.btn-glow--poster {
+    left: 46.67%;
+    top: 71%;
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* ===== video panel (frames 3 & 4) =====
+   Position/size only — GSAP (index.js) owns its transform, starting off-screen above the
+   frame (clipped by .main-container's own overflow:hidden) and sliding down to rest here once
+   play is clicked. `.is-interactive` is toggled by index.js once the slide-in finishes, since a
+   transform-based offscreen position doesn't disable pointer-events on its own. */
+.video-panel {
+    position: absolute;
+    left: 16.04%;
+    top: 22.45%;
+    width: 66.72%;
+    height: 68.24%;
+    z-index: 4;
+    overflow: hidden;
+    border: 0.625vw solid var(--color-panel-border);
+    border-radius: 1.5625vw;
+    box-shadow: 0 0.52vw 1.04vw rgba(0, 0, 0, 0.35);
+    background: #000;
+    pointer-events: none;
+}
+
+.video-panel.is-interactive {
+    pointer-events: auto;
+}
+
+/* browser-native fullscreen (index.js requests it on this element) — override our own
+   percentage-based position/size so it actually fills the screen, since the UA's `:fullscreen`
+   sizing rules have lower specificity than our own class selector and would otherwise lose */
+.video-panel:fullscreen,
+.video-panel:-webkit-full-screen {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 0;
+}
+
+.video-panel__media {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* play / pause / replay all share ONE resting spot (center of the video panel) — GSAP
+   (index.js) crossfades play -> pause in place on click, and slides replay out from that same
+   spot to its final position beside pause, rather than the two just popping in together. */
+.btn-glow--video-play,
+.btn-glow--pause,
+.btn-glow--replay {
+    left: 46.8%;
+    top: 65.2%;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.video-overlay-controls {
+    position: absolute;
+    inset: 0;
+    z-index: 6;
+    pointer-events: none;
+}
+
+/* ===== bottom control bar (shaka-style), anchored inside the video panel ===== */
+.player-controls {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 5;
+    display: flex;
+    flex-direction: column;
+    gap: 0.1vw;
+    padding: 0.208vw 0.729vw 0.833vw;
+    background-image: linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.1) 20%, rgba(0, 0, 0, 0.6) 60%, rgba(0, 0, 0, 0.9) 100%);
+}
+
+.player-controls__row {
+    display: flex;
+    align-items: center;
+    gap: 0.208vw;
+    width: 100%;
+}
+
+.player-controls__icon-btn {
+    width: 1.25vw;
+    height: 1.25vw;
+    border: 0;
+    padding: 0;
+    background: none;
+    cursor: pointer;
+    flex: 0 0 auto;
+}
+
+.player-controls__icon-btn img {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.player-controls__time {
+    padding: 0.417vw 0.208vw;
+    color: #fff;
+    font-family: "Baloo", cursive, sans-serif;
+    font-size: clamp(0.6vw, 0.729vw, 1vw);
+    white-space: nowrap;
+}
+
+.player-controls__spacer {
+    flex: 1 1 auto;
+}
+
+.player-controls__volume {
+    position: relative;
+    width: 5.625%;
+    height: 0.208vw;
+    margin: 0 0.417vw;
+}
+
+.player-controls__track {
+    position: absolute;
+    inset: 0;
+    border-radius: 0.104vw;
+    background: rgba(255, 255, 255, 0.54);
+}
+
+.player-controls__fill {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 100%;
+    border-radius: 0.104vw;
+    background: #fff;
+}
+
+.player-controls__handle {
+    position: absolute;
+    top: 50%;
+    left: 100%;
+    width: 0.52vw;
+    height: 0.52vw;
+    transform: translate(-50%, -50%);
+}
+
+.player-controls__volume {
+    cursor: pointer;
+    /* generous invisible hit area beyond the thin visual track, easier to grab/click */
+    padding: 0.6vw 0;
+}
+
+.player-controls__icon-btn.is-muted img {
+    opacity: 0.45;
+}
+
+.player-controls__seek {
+    position: relative;
+    width: 100%;
+    height: 0.625vw;
+    cursor: pointer;
+}
+
+.player-controls__seek-track {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
+    height: 0.208vw;
+    transform: translateY(-50%);
+    border-radius: 0.104vw;
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.player-controls__seek-fill {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    height: 0.208vw;
+    width: 0%;
+    transform: translateY(-50%);
+    border-radius: 0.104vw;
+    background: #fff;
+}
+
+.player-controls__handle--seek {
+    top: 50%;
+    left: 0%;
+}
+
+/* ===== state machine =====
+   poster        → panel.png + arc.png cover bg-home.png; hovering/tapping the poster (index.js,
+                   GSAP) reveals the play button + title riding up inside the arc; video panel
+                   sits off-screen above, not yet interactive
+   video-ready   → play clicked: poster (panel+arc) has GSAP-slid off-screen, video panel has
+                   GSAP-slid down to rest (paused, single play icon)
+   video-playing → pause + replay icons shown, control bar reflects live playback */
+
+/* ===== language switch (E/H/G) — match Figma's `Lag` component =====
+   Figma shows an outlined, transparent pill (white 2px stroke, no fill) around three
+   white-ringed letters — not style.css's shared solid-orange pill. Overriding those specific
+   properties here (index.css loads after style.css, so same-specificity selectors win) rather
+   than editing the shared stylesheet, since that pill is used project-wide. */
+#language {
+    background-color: transparent;
+    border: 0.156vw solid #fff;
+}
+
+/* title pill (top banner): hidden until the video panel opens */
+.main-container:not([data-state="video-ready"]):not([data-state="video-playing"]) .title-pill {
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* No media queries: `.main-container` scales as one locked-aspect-ratio unit and never
+   rearranges on any viewport (project.md: identical layout on desktop, tablet, mobile). */
